@@ -1,0 +1,24 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HMD Décor | الإدارة</title>
+<style>
+:root{--g:#c9a45c;--bg:#0b0b0b;--c:#151515;--b:#2c2c2c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eee;font-family:Arial,Tahoma,sans-serif}.wrap{max-width:1050px;margin:auto;padding:22px}.head{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--b);padding-bottom:15px}.head h1{color:var(--g)}a{color:var(--g);text-decoration:none}.panel{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:20px;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{display:block;color:var(--g);margin:8px 0}input,textarea,button{width:100%;padding:12px;border-radius:6px;border:1px solid #383838;background:#0e0e0e;color:#fff}textarea{min-height:90px}button{background:var(--g);color:#111;border:0;font-weight:bold;cursor:pointer;margin-top:8px}.danger{background:#762b2b;color:#fff}.media{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.item{border:1px solid var(--b);padding:10px;border-radius:8px}.item img,.item video{width:100%;height:150px;object-fit:cover}.muted{color:#aaa;font-size:13px;line-height:1.7}.status{color:#9bd58a;margin-top:10px}@media(max-width:700px){.grid,.media{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<div class="head"><h1>HMD Décor</h1><a href="index.html">← الموقع</a></div>
+<div class="panel"><h2>إعدادات الاتصال</h2><div class="grid">
+<div><label>الهاتف</label><input id="phone"></div><div><label>واتساب</label><input id="wa"></div>
+<div><label>البريد</label><input id="email"></div><div><label>العنوان</label><input id="address"></div></div>
+<label>النص الرئيسي</label><textarea id="hero"></textarea><button onclick="save()">حفظ</button><div id="s" class="status"></div></div>
+<div class="panel"><h2>الصور والفيديوهات</h2><p class="muted">الواجهة جاهزة للربط مع التخزين السحابي. بعد وضع بيانات Supabase في config.js سيصبح الرفع والحذف من الموقع المنشور ممكنًا.</p>
+<input type="file" id="files" multiple accept="image/*,video/*"><button onclick="upload()">رفع الملفات</button><div id="list" class="media"></div></div>
+<div class="panel"><h2>الربط النهائي</h2><p class="muted">هذه الحزمة مجهزة لتصبح CMS حقيقيًا. يلزم فقط إنشاء قاعدة بيانات/Storage على Supabase ووضع URL وAnon Key في config.js. لا تضع Service Role Key في الموقع.</p></div>
+</div>
+<script src="config.js"></script>
+<script>
+const KEY="hmd_local_v7";let d=JSON.parse(localStorage.getItem(KEY)||"null")||{phone:"+213 XX XX XX XX",wa:"213000000000",email:"contact@hmddecor.dz",address:"الجزائر",hero:"نصمم مساحات تجمع بين الفخامة والراحة واللمسة الشخصية.",media:[]};
+function load(){for(const x of ["phone","wa","email","address","hero"])document.getElementById(x).value=d[x]||"";render()}
+function save(){for(const x of ["phone","wa","email","address","hero"])d[x]=document.getElementById(x).value;localStorage.setItem(KEY,JSON.stringify(d));document.getElementById("s").textContent="تم الحفظ ✓"}
+function upload(){[...document.getElementById("files").files].forEach(f=>{let r=new FileReader();r.onload=e=>{d.media.push({type:f.type.startsWith("video")?"video":"image",src:e.target.result,name:f.name});localStorage.setItem(KEY,JSON.stringify(d));render()};r.readAsDataURL(f)})}
+function render(){document.getElementById("list").innerHTML=d.media.map((m,i)=>`<div class="item">${m.type==="video"?`<video controls src="${m.src}"></video>`:`<img src="${m.src}">`}<div class="muted">${m.name||""}</div><button class="danger" onclick="d.media.splice(${i},1);localStorage.setItem(KEY,JSON.stringify(d));render()">حذف</button></div>`).join("")}
+load();
+</script></body></html>
