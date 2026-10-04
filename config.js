@@ -1,7 +1,6 @@
 // HMD Décor CMS configuration
-// بعد إنشاء مشروع Supabase ضع البيانات هنا.
 window.HMD_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
-  STORAGE_BUCKET: "hmd-media"
+  SUPABASE_URL: "https://rvibbkhxqwvxrmfoqugx.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_VXvdABs6Cg3jz5kn6zo6uQ_KMmXL_jm",
+  STORAGE_BUCKET: "media"
 };
