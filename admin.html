@@ -122,6 +122,21 @@ button:disabled{
   padding:9px 15px;
 }
 
+.siteButton{
+  display:inline-block;
+  background:var(--g);
+  color:#111;
+  padding:9px 15px;
+  border-radius:6px;
+  text-decoration:none;
+  font-weight:bold;
+  margin:0 5px;
+}
+
+.siteButton:hover{
+  opacity:.9;
+}
+
 .media{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -176,6 +191,15 @@ button:disabled{
 .user{
   color:#aaa;
   font-size:13px;
+  margin-left:5px;
+}
+
+.adminActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+  flex-wrap:wrap;
 }
 
 #adminArea{
@@ -183,6 +207,7 @@ button:disabled{
 }
 
 @media(max-width:700px){
+
   .grid,
   .media{
     grid-template-columns:1fr;
@@ -193,8 +218,23 @@ button:disabled{
     align-items:stretch;
   }
 
+  .adminActions{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .user{
+    display:block;
+    text-align:center;
+    margin-bottom:5px;
+  }
+
+  .siteButton,
   .logout{
     width:100%;
+    text-align:center;
+    margin:3px 0;
   }
 }
 </style>
@@ -260,9 +300,15 @@ button:disabled{
 
   <h1>HMD Décor</h1>
 
-  <div>
+  <div class="adminActions">
 
     <span id="userEmail" class="user"></span>
+
+    <a
+      href="index.html"
+      class="siteButton">
+      🏠 الموقع الرئيسي
+    </a>
 
     <button
       class="logout"
