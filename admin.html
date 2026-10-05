@@ -57,6 +57,16 @@ a{
   margin:18px 0;
 }
 
+.login{
+  max-width:480px;
+  margin:70px auto;
+}
+
+.login h1{
+  text-align:center;
+  color:var(--g);
+}
+
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -98,6 +108,13 @@ button{
 .danger{
   background:var(--danger);
   color:#fff;
+}
+
+.logout{
+  background:#333;
+  color:#fff;
+  width:auto;
+  padding:9px 15px;
 }
 
 .media{
@@ -151,6 +168,15 @@ button{
   padding:15px 0;
 }
 
+.user{
+  color:#aaa;
+  font-size:13px;
+}
+
+#adminArea{
+  display:none;
+}
+
 @media(max-width:700px){
   .grid,
   .media{
@@ -162,12 +188,78 @@ button{
 
 <body>
 
+
+<!-- =========================
+     تسجيل الدخول
+========================= -->
+
+<div id="loginArea" class="wrap">
+
+  <div class="panel login">
+
+    <h1>HMD Décor</h1>
+
+    <h2>🔐 لوحة الإدارة</h2>
+
+    <p class="muted">
+      سجل الدخول للوصول إلى لوحة التحكم.
+    </p>
+
+    <label>البريد الإلكتروني</label>
+
+    <input
+      type="email"
+      id="loginEmail"
+      placeholder="البريد الإلكتروني"
+      autocomplete="email"
+    >
+
+    <label>كلمة السر</label>
+
+    <input
+      type="password"
+      id="loginPassword"
+      placeholder="كلمة السر"
+      autocomplete="current-password"
+    >
+
+    <button onclick="login()">
+      دخول
+    </button>
+
+    <div id="loginStatus" class="status"></div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     لوحة الإدارة
+========================= -->
+
+<div id="adminArea">
+
 <div class="wrap">
 
 <div class="head">
+
   <h1>HMD Décor</h1>
-  <a href="index.html">← الموقع</a>
+
+  <div>
+
+    <span id="userEmail" class="user"></span>
+
+    <button
+      class="logout"
+      onclick="logout()">
+      تسجيل الخروج
+    </button>
+
+  </div>
+
 </div>
+
 
 <div class="panel">
 
@@ -198,9 +290,12 @@ button{
 </div>
 
 <label>النص الرئيسي</label>
+
 <textarea id="hero"></textarea>
 
-<button onclick="saveSettings()">حفظ الإعدادات</button>
+<button onclick="saveSettings()">
+حفظ الإعدادات
+</button>
 
 <div id="settingsStatus" class="status"></div>
 
@@ -222,7 +317,9 @@ button{
   accept="image/*,video/*"
 >
 
-<button onclick="uploadFiles()">رفع الملفات</button>
+<button onclick="uploadFiles()">
+رفع الملفات
+</button>
 
 <div id="uploadStatus" class="status"></div>
 
@@ -243,98 +340,286 @@ button{
 
 </div>
 
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+
 
 <script>
 
 "use strict";
 
+
 /* =========================
-   التحقق من المكتبات
+   Supabase
 ========================= */
 
+let client = null;
+
+let BUCKET = null;
+
+
 const statusBox =
-  document.getElementById("connectionStatus");
+document.getElementById(
+  "connectionStatus"
+);
 
 
-function setStatus(message, error=false){
+function setStatus(
+  message,
+  error=false
+){
+
+  if(!statusBox) return;
 
   statusBox.className =
-    error ? "status error" : "status";
+    error
+    ? "status error"
+    : "status";
 
-  statusBox.textContent = message;
-
+  statusBox.textContent =
+    message;
 }
 
 
 /* =========================
-   التحقق من config.js
+   التحقق من الإعدادات
 ========================= */
 
-if(!window.HMD_CONFIG){
+if(
+  !window.HMD_CONFIG
+){
 
-  setStatus(
-    "❌ لم يتم تحميل config.js. تأكد أن config.js موجود بجانب admin.html.",
-    true
-  );
+  document.getElementById(
+    "loginStatus"
+  ).textContent =
+    "❌ لم يتم تحميل config.js.";
 
-}else if(!window.HMD_CONFIG.SUPABASE_URL){
+}else if(
+  !window.HMD_CONFIG.SUPABASE_URL
+){
 
-  setStatus(
-    "❌ SUPABASE_URL غير موجود في config.js.",
-    true
-  );
+  document.getElementById(
+    "loginStatus"
+  ).textContent =
+    "❌ SUPABASE_URL غير موجود.";
 
-}else if(!window.HMD_CONFIG.SUPABASE_ANON_KEY){
+}else if(
+  !window.HMD_CONFIG.SUPABASE_ANON_KEY
+){
 
-  setStatus(
-    "❌ SUPABASE_ANON_KEY غير موجود في config.js.",
-    true
-  );
+  document.getElementById(
+    "loginStatus"
+  ).textContent =
+    "❌ SUPABASE_ANON_KEY غير موجود.";
 
-}else if(!window.HMD_CONFIG.STORAGE_BUCKET){
+}else if(
+  !window.HMD_CONFIG.STORAGE_BUCKET
+){
 
-  setStatus(
-    "❌ STORAGE_BUCKET غير موجود في config.js.",
-    true
-  );
+  document.getElementById(
+    "loginStatus"
+  ).textContent =
+    "❌ STORAGE_BUCKET غير موجود.";
 
-}else if(!window.supabase){
+}else if(
+  !window.supabase
+){
 
-  setStatus(
-    "❌ مكتبة Supabase لم يتم تحميلها.",
-    true
-  );
+  document.getElementById(
+    "loginStatus"
+  ).textContent =
+    "❌ مكتبة Supabase لم يتم تحميلها.";
 
 }else{
 
-  startAdmin();
+  client =
+    window.supabase.createClient(
+      window.HMD_CONFIG.SUPABASE_URL,
+      window.HMD_CONFIG.SUPABASE_ANON_KEY
+    );
+
+  BUCKET =
+    window.HMD_CONFIG.STORAGE_BUCKET;
+
+  window.HMD_SUPABASE =
+    client;
+
+  window.HMD_BUCKET =
+    BUCKET;
+
+  checkSession();
 
 }
 
 
 /* =========================
-   تشغيل الإدارة
+   التحقق من تسجيل الدخول
 ========================= */
 
-function startAdmin(){
+async function checkSession(){
 
-  const CONFIG = window.HMD_CONFIG;
+  try{
 
-  const BUCKET =
-    CONFIG.STORAGE_BUCKET;
+    const result =
+      await client.auth.getSession();
 
-  const client =
-    window.supabase.createClient(
-      CONFIG.SUPABASE_URL,
-      CONFIG.SUPABASE_ANON_KEY
+    if(result.error){
+
+      console.error(
+        result.error
+      );
+
+      return;
+
+    }
+
+    const session =
+      result.data.session;
+
+    if(session){
+
+      showAdmin(
+        session.user
+      );
+
+    }else{
+
+      showLogin();
+
+    }
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    document.getElementById(
+      "loginStatus"
+    ).textContent =
+      "❌ حدث خطأ في الاتصال.";
+
+  }
+
+}
+
+
+/* =========================
+   تسجيل الدخول
+========================= */
+
+async function login(){
+
+  const email =
+    document.getElementById(
+      "loginEmail"
+    ).value.trim();
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+
+  const status =
+    document.getElementById(
+      "loginStatus"
     );
 
 
-  window.HMD_SUPABASE = client;
-  window.HMD_BUCKET = BUCKET;
+  if(!email || !password){
+
+    status.className =
+      "status error";
+
+    status.textContent =
+      "أدخل البريد الإلكتروني وكلمة السر.";
+
+    return;
+
+  }
+
+
+  status.className =
+    "status";
+
+  status.textContent =
+    "جاري تسجيل الدخول...";
+
+
+  try{
+
+    const result =
+      await client.auth.signInWithPassword({
+
+        email:email,
+
+        password:password
+
+      });
+
+
+    if(result.error){
+
+      status.className =
+        "status error";
+
+      status.textContent =
+        "❌ " +
+        result.error.message;
+
+      return;
+
+    }
+
+
+    showAdmin(
+      result.data.user
+    );
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    status.className =
+      "status error";
+
+    status.textContent =
+      "❌ حدث خطأ أثناء تسجيل الدخول.";
+
+  }
+
+}
+
+
+/* =========================
+   عرض لوحة الإدارة
+========================= */
+
+function showAdmin(user){
+
+  document.getElementById(
+    "loginArea"
+  ).style.display =
+    "none";
+
+
+  document.getElementById(
+    "adminArea"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "userEmail"
+  ).textContent =
+    user.email || "";
 
 
   setStatus(
@@ -342,10 +627,42 @@ function startAdmin(){
   );
 
 
-  checkConnection(
-    client,
-    BUCKET
-  );
+  loadSettings();
+
+  checkConnection();
+
+}
+
+
+/* =========================
+   إظهار الدخول
+========================= */
+
+function showLogin(){
+
+  document.getElementById(
+    "loginArea"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "adminArea"
+  ).style.display =
+    "none";
+
+}
+
+
+/* =========================
+   تسجيل الخروج
+========================= */
+
+async function logout(){
+
+  await client.auth.signOut();
+
+  showLogin();
 
 }
 
@@ -354,33 +671,33 @@ function startAdmin(){
    فحص الاتصال
 ========================= */
 
-async function checkConnection(
-  client,
-  bucket
-){
+async function checkConnection(){
 
   try{
 
     const timeout =
-      new Promise((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
+      new Promise(
+        (_,reject) => {
+
+          setTimeout(
+            () => reject(
               new Error(
-                "انتهت مهلة الاتصال. تأكد من الرابط أو الاتصال بالإنترنت."
+                "انتهت مهلة الاتصال."
               )
             ),
-          10000
-        )
+            10000
+          );
+
+        }
       );
 
 
     const request =
       client.storage
-        .from(bucket)
-        .list("", {
-          limit:1
-        });
+      .from(BUCKET)
+      .list("",{
+        limit:1
+      });
 
 
     const result =
@@ -410,9 +727,12 @@ async function checkConnection(
 
     await loadFiles();
 
+
   }catch(error){
 
-    console.error(error);
+    console.error(
+      error
+    );
 
     setStatus(
       "❌ فشل الاتصال: " +
@@ -430,7 +750,7 @@ async function checkConnection(
 ========================= */
 
 const SETTINGS_KEY =
-  "hmd_site_settings_v2";
+"hmd_site_settings_v2";
 
 
 const defaultSettings = {
@@ -464,9 +784,10 @@ function loadSettings(){
         )
       );
 
+
     if(saved){
 
-      data = {
+      data={
         ...data,
         ...saved
       };
@@ -476,19 +797,33 @@ function loadSettings(){
   }catch(e){}
 
 
-  document.getElementById("phone").value =
+  document.getElementById(
+    "phone"
+  ).value =
     data.phone;
 
-  document.getElementById("wa").value =
+
+  document.getElementById(
+    "wa"
+  ).value =
     data.wa;
 
-  document.getElementById("email").value =
+
+  document.getElementById(
+    "email"
+  ).value =
     data.email;
 
-  document.getElementById("address").value =
+
+  document.getElementById(
+    "address"
+  ).value =
     data.address;
 
-  document.getElementById("hero").value =
+
+  document.getElementById(
+    "hero"
+  ).value =
     data.hero;
 
 }
@@ -499,24 +834,29 @@ function saveSettings(){
   const data = {
 
     phone:
-      document.getElementById("phone")
-      .value.trim(),
+      document.getElementById(
+        "phone"
+      ).value.trim(),
 
     wa:
-      document.getElementById("wa")
-      .value.trim(),
+      document.getElementById(
+        "wa"
+      ).value.trim(),
 
     email:
-      document.getElementById("email")
-      .value.trim(),
+      document.getElementById(
+        "email"
+      ).value.trim(),
 
     address:
-      document.getElementById("address")
-      .value.trim(),
+      document.getElementById(
+        "address"
+      ).value.trim(),
 
     hero:
-      document.getElementById("hero")
-      .value.trim()
+      document.getElementById(
+        "hero"
+      ).value.trim()
 
   };
 
@@ -541,17 +881,17 @@ function saveSettings(){
 
 async function uploadFiles(){
 
-  const client =
-    window.HMD_SUPABASE;
-
-  const bucket =
-    window.HMD_BUCKET;
-
   const input =
-    document.getElementById("files");
+    document.getElementById(
+      "files"
+    );
+
 
   const status =
-    document.getElementById("uploadStatus");
+    document.getElementById(
+      "uploadStatus"
+    );
+
 
   const files =
     [...input.files];
@@ -577,42 +917,51 @@ async function uploadFiles(){
     "جاري رفع الملفات...";
 
 
-  let success = 0;
-  let failed = 0;
+  let success=0;
+
+  let failed=0;
 
 
-  for(const file of files){
+  for(
+    const file of files
+  ){
 
     try{
 
       const cleanName =
         file.name
-          .replace(/[^\w.\-() ]/g,"_")
-          .replace(/\s+/g,"_");
+        .replace(
+          /[^\w.\-() ]/g,
+          "_"
+        )
+        .replace(
+          /\s+/g,
+          "_"
+        );
 
 
       const path =
         Date.now() +
         "_" +
         Math.random()
-          .toString(36)
-          .slice(2,8) +
+        .toString(36)
+        .slice(2,8) +
         "_" +
         cleanName;
 
 
       const result =
         await client.storage
-          .from(bucket)
-          .upload(
-            path,
-            file,
-            {
-              cacheControl:"3600",
-              upsert:false,
-              contentType:file.type
-            }
-          );
+        .from(BUCKET)
+        .upload(
+          path,
+          file,
+          {
+            cacheControl:"3600",
+            upsert:false,
+            contentType:file.type
+          }
+        );
 
 
       if(result.error){
@@ -629,9 +978,12 @@ async function uploadFiles(){
 
       }
 
+
     }catch(error){
 
-      console.error(error);
+      console.error(
+        error
+      );
 
       failed++;
 
@@ -640,20 +992,13 @@ async function uploadFiles(){
   }
 
 
-  input.value = "";
+  input.value="";
 
 
-  if(failed){
-
-    status.className =
-      "status error";
-
-  }else{
-
-    status.className =
-      "status";
-
-  }
+  status.className =
+    failed
+    ? "status error"
+    : "status";
 
 
   status.textContent =
@@ -662,7 +1007,9 @@ async function uploadFiles(){
     " ملف ✓" +
     (
       failed
-      ? " — فشل " + failed + " ملف"
+      ? " — فشل " +
+        failed +
+        " ملف"
       : ""
     );
 
@@ -678,14 +1025,10 @@ async function uploadFiles(){
 
 async function loadFiles(){
 
-  const client =
-    window.HMD_SUPABASE;
-
-  const bucket =
-    window.HMD_BUCKET;
-
   const list =
-    document.getElementById("list");
+    document.getElementById(
+      "list"
+    );
 
 
   list.innerHTML =
@@ -696,14 +1039,17 @@ async function loadFiles(){
 
     const result =
       await client.storage
-        .from(bucket)
-        .list("", {
+      .from(BUCKET)
+      .list(
+        "",
+        {
           limit:100,
           sortBy:{
             column:"created_at",
             order:"desc"
           }
-        });
+        }
+      );
 
 
     if(result.error){
@@ -734,17 +1080,19 @@ async function loadFiles(){
     }
 
 
-    list.innerHTML = "";
+    list.innerHTML="";
 
 
-    files.forEach(file => {
+    files.forEach(
+      file => {
 
-      if(!file.name) return;
+        if(!file.name)
+          return;
 
 
-      const publicUrl =
-        client.storage
-          .from(bucket)
+        const publicUrl =
+          client.storage
+          .from(BUCKET)
           .getPublicUrl(
             file.name
           )
@@ -752,58 +1100,72 @@ async function loadFiles(){
           .publicUrl;
 
 
-      const item =
-        document.createElement("div");
+        const item =
+          document.createElement(
+            "div"
+          );
 
-      item.className =
-        "item";
+
+        item.className =
+          "item";
 
 
-      if(isVideo(file.name)){
+        if(
+          isVideo(
+            file.name
+          )
+        ){
 
-        item.innerHTML = `
-          <video
-            controls
-            preload="metadata"
-            src="${escapeAttr(publicUrl)}">
-          </video>
+          item.innerHTML = `
 
-          <div class="filename">
-            ${escapeHtml(file.name)}
-          </div>
+            <video
+              controls
+              preload="metadata"
+              src="${escapeAttr(publicUrl)}">
+            </video>
 
-          <button
-            class="danger"
-            onclick="deleteFile('${escapeJs(file.name)}')">
-            حذف
-          </button>
-        `;
+            <div class="filename">
+              ${escapeHtml(file.name)}
+            </div>
 
-      }else{
+            <button
+              class="danger"
+              onclick="deleteFile('${escapeJs(file.name)}')">
+              حذف
+            </button>
 
-        item.innerHTML = `
-          <img
-            loading="lazy"
-            src="${escapeAttr(publicUrl)}"
-            alt="HMD Décor">
+          `;
 
-          <div class="filename">
-            ${escapeHtml(file.name)}
-          </div>
+        }else{
 
-          <button
-            class="danger"
-            onclick="deleteFile('${escapeJs(file.name)}')">
-            حذف
-          </button>
-        `;
+          item.innerHTML = `
+
+            <img
+              loading="lazy"
+              src="${escapeAttr(publicUrl)}"
+              alt="HMD Décor">
+
+            <div class="filename">
+              ${escapeHtml(file.name)}
+            </div>
+
+            <button
+              class="danger"
+              onclick="deleteFile('${escapeJs(file.name)}')">
+              حذف
+            </button>
+
+          `;
+
+        }
+
+
+        list.appendChild(
+          item
+        );
 
       }
-
-
-      list.appendChild(item);
-
-    });
+    );
 
 
   }catch(error){
@@ -821,17 +1183,10 @@ async function loadFiles(){
 
 
 /* =========================
-   الحذف
+   حذف الملفات
 ========================= */
 
 async function deleteFile(name){
-
-  const client =
-    window.HMD_SUPABASE;
-
-  const bucket =
-    window.HMD_BUCKET;
-
 
   if(
     !confirm(
@@ -846,19 +1201,17 @@ async function deleteFile(name){
 
   const result =
     await client.storage
-      .from(bucket)
-      .remove([
-        name
-      ]);
+    .from(BUCKET)
+    .remove([
+      name
+    ]);
 
 
   if(result.error){
 
     alert(
       "لم يتم الحذف.\n\n" +
-      result.error.message +
-      "\n\n" +
-      "لاحقًا سنضيف حماية دخول الإدارة وصلاحية DELETE."
+      result.error.message
     );
 
     return;
@@ -879,9 +1232,9 @@ function isVideo(name){
 
   const ext =
     name
-      .split(".")
-      .pop()
-      .toLowerCase();
+    .split(".")
+    .pop()
+    .toLowerCase();
 
 
   return [
@@ -898,11 +1251,26 @@ function isVideo(name){
 function escapeHtml(value){
 
   return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
@@ -917,16 +1285,51 @@ function escapeAttr(value){
 function escapeJs(value){
 
   return String(value)
-    .replace(/\\/g,"\\\\")
-    .replace(/'/g,"\\'")
-    .replace(/"/g,'\\"')
-    .replace(/\n/g,"\\n")
-    .replace(/\r/g,"\\r");
+    .replace(
+      /\\/g,
+      "\\\\"
+    )
+    .replace(
+      /'/g,
+      "\\'"
+    )
+    .replace(
+      /"/g,
+      '\\"'
+    )
+    .replace(
+      /\n/g,
+      "\\n"
+    )
+    .replace(
+      /\r/g,
+      "\\r"
+    );
 
 }
 
 
-loadSettings();
+/* =========================
+   مراقبة حالة الدخول
+========================= */
+
+client.auth.onAuthStateChange(
+  (event, session) => {
+
+    if(session){
+
+      showAdmin(
+        session.user
+      );
+
+    }else{
+
+      showLogin();
+
+    }
+
+  }
+);
 
 </script>
 
