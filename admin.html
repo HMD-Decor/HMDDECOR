@@ -105,6 +105,11 @@ button{
   margin-top:8px;
 }
 
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .danger{
   background:var(--danger);
   color:#fff;
@@ -181,6 +186,15 @@ button{
   .grid,
   .media{
     grid-template-columns:1fr;
+  }
+
+  .head{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .logout{
+    width:100%;
   }
 }
 </style>
@@ -261,6 +275,10 @@ button{
 </div>
 
 
+<!-- =========================
+     إعدادات الاتصال
+========================= -->
+
 <div class="panel">
 
 <h2>إعدادات الاتصال</h2>
@@ -293,14 +311,20 @@ button{
 
 <textarea id="hero"></textarea>
 
-<button onclick="saveSettings()">
-حفظ الإعدادات
+<button
+  id="saveSettingsButton"
+  onclick="saveSettings()">
+  حفظ الإعدادات
 </button>
 
 <div id="settingsStatus" class="status"></div>
 
 </div>
 
+
+<!-- =========================
+     الصور والفيديوهات
+========================= -->
 
 <div class="panel">
 
@@ -317,8 +341,10 @@ button{
   accept="image/*,video/*"
 >
 
-<button onclick="uploadFiles()">
-رفع الملفات
+<button
+  id="uploadButton"
+  onclick="uploadFiles()">
+  رفع الملفات
 </button>
 
 <div id="uploadStatus" class="status"></div>
@@ -327,6 +353,10 @@ button{
 
 </div>
 
+
+<!-- =========================
+     حالة الربط
+========================= -->
 
 <div class="panel">
 
@@ -359,6 +389,8 @@ button{
 let client = null;
 
 let BUCKET = null;
+
+let adminReady = false;
 
 
 const statusBox =
@@ -461,6 +493,8 @@ if(
 
 async function checkSession(){
 
+  if(!client) return;
+
   try{
 
     const result =
@@ -471,6 +505,11 @@ async function checkSession(){
       console.error(
         result.error
       );
+
+      document.getElementById(
+        "loginStatus"
+      ).textContent =
+        "❌ تعذر التحقق من تسجيل الدخول.";
 
       return;
 
@@ -512,6 +551,12 @@ async function checkSession(){
 ========================= */
 
 async function login(){
+
+  if(!client){
+
+    return;
+
+  }
 
   const email =
     document.getElementById(
@@ -602,7 +647,7 @@ async function login(){
    عرض لوحة الإدارة
 ========================= */
 
-function showAdmin(user){
+async function showAdmin(user){
 
   document.getElementById(
     "loginArea"
@@ -622,14 +667,24 @@ function showAdmin(user){
     user.email || "";
 
 
+  if(adminReady){
+
+    return;
+
+  }
+
+
+  adminReady = true;
+
+
   setStatus(
     "جاري الاتصال بـ Supabase..."
   );
 
 
-  loadSettings();
+  await loadSettings();
 
-  checkConnection();
+  await checkConnection();
 
 }
 
@@ -639,6 +694,8 @@ function showAdmin(user){
 ========================= */
 
 function showLogin(){
+
+  adminReady = false;
 
   document.getElementById(
     "loginArea"
@@ -660,6 +717,8 @@ function showLogin(){
 
 async function logout(){
 
+  if(!client) return;
+
   await client.auth.signOut();
 
   showLogin();
@@ -672,6 +731,8 @@ async function logout(){
 ========================= */
 
 async function checkConnection(){
+
+  if(!client) return;
 
   try{
 
@@ -749,10 +810,6 @@ async function checkConnection(){
    الإعدادات
 ========================= */
 
-const SETTINGS_KEY =
-"hmd_site_settings_v2";
-
-
 const defaultSettings = {
 
   phone:"+213 XX XX XX XX",
@@ -769,32 +826,65 @@ const defaultSettings = {
 };
 
 
-function loadSettings(){
+/* =========================
+   تحميل الإعدادات من Supabase
+========================= */
 
-  let data =
-    {...defaultSettings};
+async function loadSettings(){
+
+  const data =
+    {
+      ...defaultSettings
+    };
 
 
   try{
 
-    const saved =
-      JSON.parse(
-        localStorage.getItem(
-          SETTINGS_KEY
-        )
+    const result =
+      await client
+      .from("site_settings")
+      .select("key,value");
+
+
+    if(result.error){
+
+      console.error(
+        "Settings load error:",
+        result.error
       );
 
+    }else{
 
-    if(saved){
+      const rows =
+        result.data || [];
 
-      data={
-        ...data,
-        ...saved
-      };
+
+      rows.forEach(
+        row => {
+
+          if(
+            row &&
+            row.key
+          ){
+
+            data[row.key] =
+              row.value || "";
+
+          }
+
+        }
+      );
 
     }
 
-  }catch(e){}
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
 
 
   document.getElementById(
@@ -829,48 +919,156 @@ function loadSettings(){
 }
 
 
-function saveSettings(){
+/* =========================
+   حفظ الإعدادات في Supabase
+========================= */
 
-  const data = {
+async function saveSettings(){
 
-    phone:
-      document.getElementById(
-        "phone"
-      ).value.trim(),
+  if(!client){
 
-    wa:
-      document.getElementById(
-        "wa"
-      ).value.trim(),
+    return;
 
-    email:
-      document.getElementById(
-        "email"
-      ).value.trim(),
-
-    address:
-      document.getElementById(
-        "address"
-      ).value.trim(),
-
-    hero:
-      document.getElementById(
-        "hero"
-      ).value.trim()
-
-  };
+  }
 
 
-  localStorage.setItem(
-    SETTINGS_KEY,
-    JSON.stringify(data)
-  );
+  const status =
+    document.getElementById(
+      "settingsStatus"
+    );
 
 
-  document.getElementById(
-    "settingsStatus"
-  ).textContent =
-    "تم حفظ الإعدادات ✓";
+  const button =
+    document.getElementById(
+      "saveSettingsButton"
+    );
+
+
+  const settings = [
+
+    {
+      key:"phone",
+
+      value:
+        document
+        .getElementById("phone")
+        .value
+        .trim()
+
+    },
+
+    {
+      key:"wa",
+
+      value:
+        document
+        .getElementById("wa")
+        .value
+        .trim()
+
+    },
+
+    {
+      key:"email",
+
+      value:
+        document
+        .getElementById("email")
+        .value
+        .trim()
+
+    },
+
+    {
+      key:"address",
+
+      value:
+        document
+        .getElementById("address")
+        .value
+        .trim()
+
+    },
+
+    {
+      key:"hero",
+
+      value:
+        document
+        .getElementById("hero")
+        .value
+        .trim()
+
+    }
+
+  ];
+
+
+  status.className =
+    "status";
+
+  status.textContent =
+    "جاري حفظ الإعدادات...";
+
+
+  button.disabled = true;
+
+
+  try{
+
+    const result =
+      await client
+      .from("site_settings")
+      .upsert(
+        settings,
+        {
+          onConflict:"key"
+        }
+      );
+
+
+    if(result.error){
+
+      console.error(
+        result.error
+      );
+
+      status.className =
+        "status error";
+
+      status.textContent =
+        "❌ لم يتم الحفظ: " +
+        result.error.message;
+
+      return;
+
+    }
+
+
+    status.className =
+      "status";
+
+    status.textContent =
+      "✅ تم حفظ الإعدادات في Supabase";
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    status.className =
+      "status error";
+
+    status.textContent =
+      "❌ حدث خطأ أثناء الحفظ.";
+
+  }finally{
+
+    button.disabled = false;
+
+  }
 
 }
 
@@ -881,6 +1079,9 @@ function saveSettings(){
 
 async function uploadFiles(){
 
+  if(!client) return;
+
+
   const input =
     document.getElementById(
       "files"
@@ -890,6 +1091,12 @@ async function uploadFiles(){
   const status =
     document.getElementById(
       "uploadStatus"
+    );
+
+
+  const button =
+    document.getElementById(
+      "uploadButton"
     );
 
 
@@ -915,6 +1122,9 @@ async function uploadFiles(){
 
   status.textContent =
     "جاري رفع الملفات...";
+
+
+  button.disabled = true;
 
 
   let success=0;
@@ -1014,6 +1224,9 @@ async function uploadFiles(){
     );
 
 
+  button.disabled = false;
+
+
   await loadFiles();
 
 }
@@ -1024,6 +1237,9 @@ async function uploadFiles(){
 ========================= */
 
 async function loadFiles(){
+
+  if(!client) return;
+
 
   const list =
     document.getElementById(
@@ -1044,10 +1260,12 @@ async function loadFiles(){
         "",
         {
           limit:100,
+
           sortBy:{
             column:"created_at",
             order:"desc"
           }
+
         }
       );
 
@@ -1313,23 +1531,27 @@ function escapeJs(value){
    مراقبة حالة الدخول
 ========================= */
 
-client.auth.onAuthStateChange(
-  (event, session) => {
+if(client){
 
-    if(session){
+  client.auth.onAuthStateChange(
+    (event, session) => {
 
-      showAdmin(
-        session.user
-      );
+      if(session){
 
-    }else{
+        showAdmin(
+          session.user
+        );
 
-      showLogin();
+      }else{
+
+        showLogin();
+
+      }
 
     }
+  );
 
-  }
-);
+}
 
 </script>
 
