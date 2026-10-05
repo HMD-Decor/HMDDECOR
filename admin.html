@@ -1,24 +1,801 @@
-<!doctype html><html lang="ar" dir="rtl"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>HMD Décor | الإدارة</title>
+
 <style>
-:root{--g:#c9a45c;--bg:#0b0b0b;--c:#151515;--b:#2c2c2c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eee;font-family:Arial,Tahoma,sans-serif}.wrap{max-width:1050px;margin:auto;padding:22px}.head{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--b);padding-bottom:15px}.head h1{color:var(--g)}a{color:var(--g);text-decoration:none}.panel{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:20px;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{display:block;color:var(--g);margin:8px 0}input,textarea,button{width:100%;padding:12px;border-radius:6px;border:1px solid #383838;background:#0e0e0e;color:#fff}textarea{min-height:90px}button{background:var(--g);color:#111;border:0;font-weight:bold;cursor:pointer;margin-top:8px}.danger{background:#762b2b;color:#fff}.media{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.item{border:1px solid var(--b);padding:10px;border-radius:8px}.item img,.item video{width:100%;height:150px;object-fit:cover}.muted{color:#aaa;font-size:13px;line-height:1.7}.status{color:#9bd58a;margin-top:10px}@media(max-width:700px){.grid,.media{grid-template-columns:1fr}}
-</style></head><body><div class="wrap">
-<div class="head"><h1>HMD Décor</h1><a href="index.html">← الموقع</a></div>
-<div class="panel"><h2>إعدادات الاتصال</h2><div class="grid">
-<div><label>الهاتف</label><input id="phone"></div><div><label>واتساب</label><input id="wa"></div>
-<div><label>البريد</label><input id="email"></div><div><label>العنوان</label><input id="address"></div></div>
-<label>النص الرئيسي</label><textarea id="hero"></textarea><button onclick="save()">حفظ</button><div id="s" class="status"></div></div>
-<div class="panel"><h2>الصور والفيديوهات</h2><p class="muted">الواجهة جاهزة للربط مع التخزين السحابي. بعد وضع بيانات Supabase في config.js سيصبح الرفع والحذف من الموقع المنشور ممكنًا.</p>
-<input type="file" id="files" multiple accept="image/*,video/*"><button onclick="upload()">رفع الملفات</button><div id="list" class="media"></div></div>
-<div class="panel"><h2>الربط النهائي</h2><p class="muted">هذه الحزمة مجهزة لتصبح CMS حقيقيًا. يلزم فقط إنشاء قاعدة بيانات/Storage على Supabase ووضع URL وAnon Key في config.js. لا تضع Service Role Key في الموقع.</p></div>
+:root{
+  --g:#c9a45c;
+  --bg:#0b0b0b;
+  --c:#151515;
+  --b:#2c2c2c;
+  --danger:#762b2b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:#eee;
+  font-family:Arial,Tahoma,sans-serif;
+}
+
+.wrap{
+  max-width:1050px;
+  margin:auto;
+  padding:22px;
+}
+
+.head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  border-bottom:1px solid var(--b);
+  padding-bottom:15px;
+}
+
+.head h1{
+  color:var(--g);
+  margin:0;
+}
+
+a{
+  color:var(--g);
+  text-decoration:none;
+}
+
+.panel{
+  background:var(--c);
+  border:1px solid var(--b);
+  border-radius:10px;
+  padding:20px;
+  margin:18px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+label{
+  display:block;
+  color:var(--g);
+  margin:8px 0;
+}
+
+input,
+textarea,
+button{
+  width:100%;
+  padding:12px;
+  border-radius:6px;
+  border:1px solid #383838;
+  background:#0e0e0e;
+  color:#fff;
+  font-size:15px;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+button{
+  background:var(--g);
+  color:#111;
+  border:0;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.danger{
+  background:var(--danger);
+  color:#fff;
+}
+
+.media{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:18px;
+}
+
+.item{
+  border:1px solid var(--b);
+  padding:10px;
+  border-radius:8px;
+  background:#101010;
+}
+
+.item img,
+.item video{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  border-radius:6px;
+  display:block;
+}
+
+.filename{
+  color:#aaa;
+  font-size:12px;
+  margin-top:8px;
+  word-break:break-word;
+}
+
+.muted{
+  color:#aaa;
+  font-size:13px;
+  line-height:1.7;
+}
+
+.status{
+  margin-top:12px;
+  color:#9bd58a;
+  line-height:1.7;
+}
+
+.error{
+  color:#ff8585;
+}
+
+.loading{
+  color:var(--g);
+  padding:15px 0;
+}
+
+@media(max-width:700px){
+  .grid,
+  .media{
+    grid-template-columns:1fr;
+  }
+
+  .head{
+    align-items:flex-start;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <div class="head">
+    <h1>HMD Décor</h1>
+    <a href="index.html">← الموقع</a>
+  </div>
+
+
+  <!-- إعدادات الاتصال -->
+  <div class="panel">
+
+    <h2>إعدادات الاتصال</h2>
+
+    <div class="grid">
+
+      <div>
+        <label>الهاتف</label>
+        <input id="phone" placeholder="+213 ...">
+      </div>
+
+      <div>
+        <label>واتساب</label>
+        <input id="wa" placeholder="213...">
+      </div>
+
+      <div>
+        <label>البريد</label>
+        <input id="email" placeholder="contact@...">
+      </div>
+
+      <div>
+        <label>العنوان</label>
+        <input id="address" placeholder="مشرية وما جاورها">
+      </div>
+
+    </div>
+
+    <label>النص الرئيسي</label>
+    <textarea id="hero"></textarea>
+
+    <button onclick="saveSettings()">
+      حفظ الإعدادات
+    </button>
+
+    <div id="settingsStatus" class="status"></div>
+
+  </div>
+
+
+  <!-- الصور والفيديوهات -->
+  <div class="panel">
+
+    <h2>الصور والفيديوهات</h2>
+
+    <p class="muted">
+      الملفات التي ترفعها هنا يتم تخزينها في Supabase Storage داخل مجلد HMD Décor.
+    </p>
+
+    <input
+      type="file"
+      id="files"
+      multiple
+      accept="image/*,video/*"
+    >
+
+    <button onclick="uploadFiles()">
+      رفع الملفات
+    </button>
+
+    <div id="uploadStatus" class="status"></div>
+
+    <div id="list" class="media"></div>
+
+  </div>
+
+
+  <!-- معلومات الربط -->
+  <div class="panel">
+
+    <h2>حالة الربط</h2>
+
+    <p id="connectionStatus" class="status">
+      جاري التحقق من Supabase...
+    </p>
+
+  </div>
+
 </div>
+
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- إعدادات المشروع -->
 <script src="config.js"></script>
+
+
 <script>
-const KEY="hmd_local_v7";let d=JSON.parse(localStorage.getItem(KEY)||"null")||{phone:"+213 XX XX XX XX",wa:"213000000000",email:"contact@hmddecor.dz",address:"الجزائر",hero:"نصمم مساحات تجمع بين الفخامة والراحة واللمسة الشخصية.",media:[]};
-function load(){for(const x of ["phone","wa","email","address","hero"])document.getElementById(x).value=d[x]||"";render()}
-function save(){for(const x of ["phone","wa","email","address","hero"])d[x]=document.getElementById(x).value;localStorage.setItem(KEY,JSON.stringify(d));document.getElementById("s").textContent="تم الحفظ ✓"}
-function upload(){[...document.getElementById("files").files].forEach(f=>{let r=new FileReader();r.onload=e=>{d.media.push({type:f.type.startsWith("video")?"video":"image",src:e.target.result,name:f.name});localStorage.setItem(KEY,JSON.stringify(d));render()};r.readAsDataURL(f)})}
-function render(){document.getElementById("list").innerHTML=d.media.map((m,i)=>`<div class="item">${m.type==="video"?`<video controls src="${m.src}"></video>`:`<img src="${m.src}">`}<div class="muted">${m.name||""}</div><button class="danger" onclick="d.media.splice(${i},1);localStorage.setItem(KEY,JSON.stringify(d));render()">حذف</button></div>`).join("")}
-load();
-</script></body></html>
+
+const CONFIG = window.HMD_CONFIG;
+
+if (!CONFIG) {
+  throw new Error("config.js غير موجود أو لم يتم تحميله.");
+}
+
+
+const supabase = window.supabase.createClient(
+  CONFIG.SUPABASE_URL,
+  CONFIG.SUPABASE_ANON_KEY
+);
+
+
+const BUCKET = CONFIG.STORAGE_BUCKET;
+
+
+/* =========================
+   إعدادات الموقع
+========================= */
+
+const SETTINGS_KEY = "hmd_site_settings_v1";
+
+const defaultSettings = {
+  phone: "+213 XX XX XX XX",
+  wa: "213000000000",
+  email: "contact@hmddecor.dz",
+  address: "مشرية وما جاورها",
+  hero: "نصمم مساحات تجمع بين الفخامة والراحة واللمسة الشخصية."
+};
+
+
+function getSettings(){
+
+  try{
+
+    const saved =
+      JSON.parse(localStorage.getItem(SETTINGS_KEY));
+
+    return {
+      ...defaultSettings,
+      ...(saved || {})
+    };
+
+  }catch(e){
+
+    return {...defaultSettings};
+
+  }
+
+}
+
+
+function loadSettings(){
+
+  const d = getSettings();
+
+  document.getElementById("phone").value = d.phone || "";
+  document.getElementById("wa").value = d.wa || "";
+  document.getElementById("email").value = d.email || "";
+  document.getElementById("address").value = d.address || "";
+  document.getElementById("hero").value = d.hero || "";
+
+}
+
+
+function saveSettings(){
+
+  const data = {
+
+    phone:
+      document.getElementById("phone").value.trim(),
+
+    wa:
+      document.getElementById("wa").value.trim(),
+
+    email:
+      document.getElementById("email").value.trim(),
+
+    address:
+      document.getElementById("address").value.trim(),
+
+    hero:
+      document.getElementById("hero").value.trim()
+
+  };
+
+
+  localStorage.setItem(
+    SETTINGS_KEY,
+    JSON.stringify(data)
+  );
+
+
+  document.getElementById(
+    "settingsStatus"
+  ).textContent =
+    "تم حفظ الإعدادات ✓";
+
+}
+
+
+/* =========================
+   Supabase
+========================= */
+
+async function checkConnection(){
+
+  const status =
+    document.getElementById("connectionStatus");
+
+  try{
+
+    const { data, error } =
+      await supabase.storage
+        .from(BUCKET)
+        .list("", {
+          limit: 1
+        });
+
+
+    if(error){
+
+      status.className = "status error";
+
+      status.textContent =
+        "تعذر الاتصال بـ Supabase: " +
+        error.message;
+
+      return;
+
+    }
+
+
+    status.className = "status";
+
+    status.textContent =
+      "Supabase متصل بنجاح ✓";
+
+
+    await loadFiles();
+
+  }catch(error){
+
+    status.className = "status error";
+
+    status.textContent =
+      "حدث خطأ في الاتصال: " +
+      error.message;
+
+  }
+
+}
+
+
+/* =========================
+   رفع الملفات
+========================= */
+
+async function uploadFiles(){
+
+  const input =
+    document.getElementById("files");
+
+  const files =
+    [...input.files];
+
+  const status =
+    document.getElementById("uploadStatus");
+
+
+  if(!files.length){
+
+    status.className = "status error";
+
+    status.textContent =
+      "اختر صورة أو فيديو أولًا.";
+
+    return;
+
+  }
+
+
+  status.className = "status";
+
+  status.textContent =
+    "جاري رفع الملفات...";
+
+
+  let success = 0;
+  let failed = 0;
+
+
+  for(const file of files){
+
+    try{
+
+      const safeName =
+        file.name
+          .replace(/[^\w.\-() ]/g,"_")
+          .replace(/\s+/g,"_");
+
+
+      const extension =
+        safeName.includes(".")
+          ? safeName.substring(
+              safeName.lastIndexOf(".")
+            )
+          : "";
+
+
+      const baseName =
+        safeName
+          .replace(extension,"");
+
+
+      const uniqueName =
+        baseName +
+        "_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .substring(2,7) +
+        extension;
+
+
+      const filePath =
+        uniqueName;
+
+
+      const { error } =
+        await supabase.storage
+          .from(BUCKET)
+          .upload(
+            filePath,
+            file,
+            {
+              cacheControl:"3600",
+              upsert:false,
+              contentType:file.type
+            }
+          );
+
+
+      if(error){
+
+        console.error(error);
+
+        failed++;
+
+      }else{
+
+        success++;
+
+      }
+
+
+    }catch(error){
+
+      console.error(error);
+
+      failed++;
+
+    }
+
+  }
+
+
+  input.value = "";
+
+
+  status.className =
+    failed
+      ? "status error"
+      : "status";
+
+
+  status.textContent =
+    "تم رفع " +
+    success +
+    " ملف ✓" +
+    (failed
+      ? " | فشل رفع " + failed + " ملف"
+      : "");
+
+
+  await loadFiles();
+
+}
+
+
+/* =========================
+   عرض الملفات
+========================= */
+
+async function loadFiles(){
+
+  const list =
+    document.getElementById("list");
+
+
+  list.innerHTML =
+    '<div class="loading">جاري تحميل الملفات...</div>';
+
+
+  const { data, error } =
+    await supabase.storage
+      .from(BUCKET)
+      .list("", {
+        limit:100,
+        sortBy:{
+          column:"created_at",
+          order:"desc"
+        }
+      });
+
+
+  if(error){
+
+    list.innerHTML =
+      '<div class="status error">' +
+      "خطأ في تحميل الملفات: " +
+      escapeHtml(error.message) +
+      "</div>";
+
+    return;
+
+  }
+
+
+  if(!data || !data.length){
+
+    list.innerHTML =
+      '<p class="muted">لا توجد ملفات حتى الآن.</p>';
+
+    return;
+
+  }
+
+
+  list.innerHTML = "";
+
+
+  for(const file of data){
+
+    if(!file.name) continue;
+
+
+    const {
+      data:publicData
+    } =
+      supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(file.name);
+
+
+    const url =
+      publicData.publicUrl;
+
+
+    const isVideo =
+      isVideoFile(file.name);
+
+
+    const item =
+      document.createElement("div");
+
+    item.className = "item";
+
+
+    if(isVideo){
+
+      item.innerHTML =
+        `
+        <video
+          controls
+          preload="metadata"
+          src="${escapeAttribute(url)}">
+        </video>
+
+        <div class="filename">
+          ${escapeHtml(file.name)}
+        </div>
+
+        <button
+          class="danger"
+          onclick="deleteFile('${escapeJs(file.name)}')">
+          حذف
+        </button>
+        `;
+
+    }else{
+
+      item.innerHTML =
+        `
+        <img
+          loading="lazy"
+          src="${escapeAttribute(url)}"
+          alt="HMD Décor">
+
+        <div class="filename">
+          ${escapeHtml(file.name)}
+        </div>
+
+        <button
+          class="danger"
+          onclick="deleteFile('${escapeJs(file.name)}')">
+          حذف
+        </button>
+        `;
+
+    }
+
+
+    list.appendChild(item);
+
+  }
+
+}
+
+
+/* =========================
+   حذف الملفات
+========================= */
+
+async function deleteFile(fileName){
+
+  const ok =
+    confirm(
+      "هل أنت متأكد من حذف هذا الملف؟"
+    );
+
+
+  if(!ok) return;
+
+
+  const { error } =
+    await supabase.storage
+      .from(BUCKET)
+      .remove([
+        fileName
+      ]);
+
+
+  if(error){
+
+    alert(
+      "لم يتم حذف الملف.\n\n" +
+      error.message +
+      "\n\n" +
+      "قد تحتاج سياسة DELETE مخصصة للإدارة."
+    );
+
+    return;
+
+  }
+
+
+  await loadFiles();
+
+}
+
+
+/* =========================
+   أدوات مساعدة
+========================= */
+
+function isVideoFile(name){
+
+  const ext =
+    name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+
+  return [
+    "mp4",
+    "webm",
+    "ogg",
+    "mov",
+    "m4v"
+  ].includes(ext);
+
+}
+
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+function escapeAttribute(value){
+
+  return escapeHtml(value);
+
+}
+
+
+function escapeJs(value){
+
+  return String(value)
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'")
+    .replace(/"/g,'\\"')
+    .replace(/\n/g,"\\n")
+    .replace(/\r/g,"\\r");
+
+}
+
+
+/* =========================
+   تشغيل الصفحة
+========================= */
+
+loadSettings();
+
+checkConnection();
+
+</script>
+
+</body>
+</html>
