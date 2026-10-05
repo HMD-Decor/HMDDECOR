@@ -315,7 +315,7 @@ HMD DÉCOR
 اتصل بنا
 </a>
 
-<a class="btn" id="wa" target="_blank">
+<a class="btn" id="wa" target="_blank" rel="noopener">
 واتساب
 </a>
 
@@ -329,8 +329,6 @@ HMD DÉCOR
 </footer>
 
 
-<!-- Supabase -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="config.js"></script>
@@ -342,309 +340,436 @@ HMD DÉCOR
 
 
 /* =========================
-   الإعدادات المحلية
+   الإعدادات الافتراضية
 ========================= */
-
-const SETTINGS_KEY =
-"hmd_site_settings_v2";
-
 
 const defaultSettings = {
 
-phone:"+213 XX XX XX XX",
+  phone:"+213 XX XX XX XX",
 
-wa:"213000000000",
+  wa:"213000000000",
 
-address:"مشرية وما جاورها",
+  email:"contact@hmddecor.dz",
 
-hero:
-"نصمم مساحات تجمع بين الفخامة والراحة واللمسة الشخصية."
+  address:"مشرية وما جاورها",
+
+  hero:
+  "نصمم مساحات تجمع بين الفخامة والراحة واللمسة الشخصية."
 
 };
-
-
-let settings =
-{...defaultSettings};
-
-
-try{
-
-const saved =
-JSON.parse(
-localStorage.getItem(
-SETTINGS_KEY
-)
-);
-
-if(saved){
-
-settings={
-...settings,
-...saved
-};
-
-}
-
-}catch(error){
-
-console.log(
-"تعذر تحميل الإعدادات المحلية"
-);
-
-}
 
 
 /* =========================
-   عرض المعلومات
+   التحقق من Supabase
 ========================= */
 
-document.getElementById(
-"hero"
-).textContent =
-settings.hero;
+let client = null;
+
+let bucket = null;
 
 
-document.getElementById(
-"address"
-).textContent =
-settings.address;
+if(
+  window.HMD_CONFIG &&
+  window.supabase
+){
 
+  client =
+    window.supabase.createClient(
+      window.HMD_CONFIG.SUPABASE_URL,
+      window.HMD_CONFIG.SUPABASE_ANON_KEY
+    );
 
-const phone =
-document.getElementById("phone");
+  bucket =
+    window.HMD_CONFIG.STORAGE_BUCKET;
 
-
-phone.href =
-"tel:" +
-settings.phone.replace(
-/\s/g,
-""
-);
-
-
-const wa =
-document.getElementById("wa");
-
-
-wa.href =
-"https://wa.me/" +
-settings.wa.replace(
-/\D/g,
-""
-);
+}
 
 
 /* =========================
-   Supabase
+   تحميل الإعدادات من Supabase
+========================= */
+
+async function loadSettings(){
+
+  const settings =
+    {...defaultSettings};
+
+
+  if(!client){
+
+    applySettings(settings);
+
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await client
+      .from("site_settings")
+      .select("key,value");
+
+
+    if(result.error){
+
+      console.error(
+        "Settings error:",
+        result.error
+      );
+
+      applySettings(settings);
+
+      return;
+
+    }
+
+
+    const rows =
+      result.data || [];
+
+
+    rows.forEach(
+      row => {
+
+        if(
+          row &&
+          row.key
+        ){
+
+          settings[row.key] =
+            row.value || "";
+
+        }
+
+      }
+    );
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
+
+
+  applySettings(settings);
+
+}
+
+
+/* =========================
+   تطبيق الإعدادات على الموقع
+========================= */
+
+function applySettings(settings){
+
+  const hero =
+    document.getElementById(
+      "hero"
+    );
+
+
+  const address =
+    document.getElementById(
+      "address"
+    );
+
+
+  const phone =
+    document.getElementById(
+      "phone"
+    );
+
+
+  const wa =
+    document.getElementById(
+      "wa"
+    );
+
+
+  if(hero){
+
+    hero.textContent =
+      settings.hero ||
+      defaultSettings.hero;
+
+  }
+
+
+  if(address){
+
+    address.textContent =
+      settings.address ||
+      defaultSettings.address;
+
+  }
+
+
+  if(phone){
+
+    const phoneNumber =
+      (
+        settings.phone ||
+        defaultSettings.phone
+      ).replace(
+        /\s/g,
+        ""
+      );
+
+
+    phone.href =
+      "tel:" +
+      phoneNumber;
+
+  }
+
+
+  if(wa){
+
+    const whatsappNumber =
+      (
+        settings.wa ||
+        defaultSettings.wa
+      ).replace(
+        /\D/g,
+        ""
+      );
+
+
+    wa.href =
+      "https://wa.me/" +
+      whatsappNumber;
+
+  }
+
+}
+
+
+/* =========================
+   تحديد نوع الفيديو
+========================= */
+
+function isVideo(name){
+
+  const extension =
+    name
+    .split(".")
+    .pop()
+    .toLowerCase();
+
+
+  return [
+
+    "mp4",
+    "webm",
+    "ogg",
+    "mov",
+    "m4v"
+
+  ].includes(
+    extension
+  );
+
+}
+
+
+/* =========================
+   تحميل الصور والفيديوهات
 ========================= */
 
 async function loadMedia(){
 
-const gallery =
-document.getElementById(
-"gallery"
-);
+  const gallery =
+    document.getElementById(
+      "gallery"
+    );
 
 
-if(!window.HMD_CONFIG){
+  if(!gallery){
 
-gallery.innerHTML =
-'<div class="empty">تعذر تحميل إعدادات الموقع.</div>';
+    return;
 
-return;
+  }
+
+
+  if(!client){
+
+    gallery.innerHTML =
+      '<div class="empty">تعذر الاتصال بخدمة الصور.</div>';
+
+    return;
+
+  }
+
+
+  if(!bucket){
+
+    gallery.innerHTML =
+      '<div class="empty">لم يتم تحديد Storage Bucket.</div>';
+
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await client.storage
+      .from(bucket)
+      .list(
+        "",
+        {
+          limit:100,
+
+          sortBy:{
+            column:"created_at",
+            order:"desc"
+          }
+
+        }
+      );
+
+
+    if(result.error){
+
+      console.error(
+        result.error
+      );
+
+      gallery.innerHTML =
+        '<div class="empty">تعذر تحميل الأعمال حالياً.</div>';
+
+      return;
+
+    }
+
+
+    const files =
+      result.data || [];
+
+
+    if(!files.length){
+
+      gallery.innerHTML =
+        '<div class="empty">سيتم عرض أعمال HMD Décor هنا قريباً.</div>';
+
+      return;
+
+    }
+
+
+    gallery.innerHTML =
+      "";
+
+
+    files.forEach(
+      file => {
+
+        if(!file.name){
+
+          return;
+
+        }
+
+
+        const publicUrl =
+          client.storage
+          .from(bucket)
+          .getPublicUrl(
+            file.name
+          )
+          .data
+          .publicUrl;
+
+
+        if(
+          isVideo(
+            file.name
+          )
+        ){
+
+          const video =
+            document.createElement(
+              "video"
+            );
+
+
+          video.controls =
+            true;
+
+          video.preload =
+            "metadata";
+
+          video.src =
+            publicUrl;
+
+
+          gallery.appendChild(
+            video
+          );
+
+
+        }else{
+
+          const img =
+            document.createElement(
+              "img"
+            );
+
+
+          img.loading =
+            "lazy";
+
+          img.src =
+            publicUrl;
+
+          img.alt =
+            "HMD Décor";
+
+
+          gallery.appendChild(
+            img
+          );
+
+        }
+
+      }
+    );
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    gallery.innerHTML =
+      '<div class="empty">حدث خطأ أثناء تحميل الأعمال.</div>';
+
+  }
 
 }
 
 
-if(!window.supabase){
+/* =========================
+   تشغيل الموقع
+========================= */
 
-gallery.innerHTML =
-'<div class="empty">تعذر تحميل خدمة الصور.</div>';
+async function startSite(){
 
-return;
+  await loadSettings();
 
-}
-
-
-const CONFIG =
-window.HMD_CONFIG;
-
-
-const client =
-window.supabase.createClient(
-
-CONFIG.SUPABASE_URL,
-
-CONFIG.SUPABASE_ANON_KEY
-
-);
-
-
-const bucket =
-CONFIG.STORAGE_BUCKET;
-
-
-try{
-
-
-const result =
-await client.storage
-.from(bucket)
-.list("",{
-
-limit:100,
-
-sortBy:{
-column:"created_at",
-order:"desc"
-}
-
-});
-
-
-if(result.error){
-
-console.error(
-result.error
-);
-
-gallery.innerHTML =
-'<div class="empty">تعذر تحميل الأعمال حالياً.</div>';
-
-return;
+  await loadMedia();
 
 }
 
 
-const files =
-result.data || [];
-
-
-if(!files.length){
-
-gallery.innerHTML =
-'<div class="empty">سيتم عرض أعمال HMD Décor هنا قريباً.</div>';
-
-return;
-
-}
-
-
-gallery.innerHTML =
-"";
-
-
-files.forEach(
-file => {
-
-
-if(!file.name){
-
-return;
-
-}
-
-
-const publicUrl =
-client.storage
-.from(bucket)
-.getPublicUrl(
-file.name
-)
-.data
-.publicUrl;
-
-
-const extension =
-file.name
-.split(".")
-.pop()
-.toLowerCase();
-
-
-const videoExtensions = [
-
-"mp4",
-"webm",
-"ogg",
-"mov",
-"m4v"
-
-];
-
-
-if(
-videoExtensions.includes(
-extension
-)
-){
-
-
-const video =
-document.createElement(
-"video"
-);
-
-
-video.controls = true;
-
-video.preload =
-"metadata";
-
-video.src =
-publicUrl;
-
-
-gallery.appendChild(
-video
-);
-
-
-}else{
-
-
-const img =
-document.createElement(
-"img"
-);
-
-
-img.loading =
-"lazy";
-
-img.src =
-publicUrl;
-
-img.alt =
-"HMD Décor";
-
-
-gallery.appendChild(
-img
-);
-
-}
-
-
-});
-
-}catch(error){
-
-console.error(
-error
-);
-
-gallery.innerHTML =
-'<div class="empty">حدث خطأ أثناء تحميل الأعمال.</div>';
-
-}
-
-}
-
-
-/* تشغيل تحميل الصور */
-
-loadMedia();
+startSite();
 
 </script>
 
